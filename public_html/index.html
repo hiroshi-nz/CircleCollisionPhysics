@@ -20,20 +20,21 @@
 
 
                 <script src="Collision.js"></script>
+                <script src="Camera.js"></script> 
 
 		<script>
                     $(document).ready(function(){
+                        
                         var slider = document.getElementById("myRange");
                         slider.oninput = function(){
                             console.log(this.value);
                             var drawingGeometries = drawCircleCollision(this.value);
                             camera.update(cameraX, cameraY, cameraZ);
-                            drawingGeometries.dispose();
-                            
+                            drawingGeometries.dispose();   
                         };
                         
 			var camera, scene, renderer;
-                        
+                        var container;
                         //very important
                         var cameraX = 0;
                         var cameraY = 0;
@@ -65,6 +66,11 @@
                             }  
                             if(keyCode === 32){//space   
                             } 
+                            
+                            var drawingGeometries = drawCircleCollision(0);
+                            camera.update(cameraX, cameraY, cameraZ);
+                            drawingGeometries.dispose();
+                            
                         });                      
 
                         function drawCircleCollision(angle){
@@ -86,55 +92,13 @@
                             drawingGeometries.initializeLines(physicsCollision.lines);
                             drawingGeometries.initializePoints(physicsCollision.points);
                             drawingGeometries.draw();
-                            
-                            test();
+
                             return drawingGeometries;
                         }
-                        
-                        function test(){
-                            console.log(scene.children);
-                            console.log(scene);
-                        }
-                        
-                        function Camera(scene, renderer){
-                            this.perspevtiveCamera;
-                            this.orthographicCamera;
-                            this.isPerspective = true;
-                            this.scene = scene;
-                            this.renderer = renderer;
 
-                            this.initialize = function(){
-                                this.perspevtiveCamera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 1000 );
-                                var size = 70;
-                                this.orthographicCamera = new THREE.OrthographicCamera(size / - 2, size / 2, size / 2, size / - 2, 0.1, 1000);
-                                //this.orthographicCamera.setViewOffset(100, 100, 10, -20, 100, 100);
-                            };
-                            this.initialize();
-                            this.switch = function(){
-                                if(this.isPerspective){
-                                    this.isPerspective = false;
-                                }else{      
-                                    this.isPerspective = true;
-                                }      
-                            };
-                            
-                            this.update = function(cameraX, cameraY, cameraZ){
-                                if(this.isPerspective){
-                                    this.perspevtiveCamera.position.set(cameraX, cameraY, cameraZ);
-                                    this.perspevtiveCamera.lookAt(new THREE.Vector3(cameraX, cameraY, cameraZ - 10));
-                                    this.renderer.render(this.scene, this.perspevtiveCamera);
-                                }else{//ortho
-                                    var zOffset = 30;
-                                    var yOffset = 30;
-                                    this.orthographicCamera.position.set(-10, yOffset, zOffset);
-                                    this.orthographicCamera.lookAt(new THREE.Vector3(10, yOffset, zOffset));
-                                    this.renderer.render(this.scene, this.orthographicCamera);
-                                }  
-                            };
-                            
-                        }
-
-			function init() {
+			function init() {                        
+                            container = document.createElement("div");
+                            document.body.appendChild(container);
                             scene = new THREE.Scene();
                             
                             loadInitMain();            
@@ -143,7 +107,12 @@
                             var drawingGeometries = drawCircleCollision(0);
                             camera = new Camera(scene, renderer);
                             camera.update(cameraX, cameraY, cameraZ);
+                            camera.switch();
                             drawingGeometries.dispose();//needed be done after rendering
+                            
+                            window.addEventListener( 'resize', onWindowResize, false );   
+                            
+                            console.log(camera.isPerspective);
 			}
                         
                         function loadInitMain(){
@@ -156,12 +125,9 @@
 
                             renderer = new THREE.WebGLRenderer();
                             renderer.setPixelRatio( window.devicePixelRatio );
-                            renderer.setSize( window.innerWidth - 100, window.innerHeight -100);
-
+                            renderer.setSize( window.innerWidth, window.innerHeight);
                             renderer.shadowMapEnabled = true;
-                            document.body.appendChild(renderer.domElement);
-                            window.addEventListener( 'resize', onWindowResize, false );
-
+                            container.appendChild(renderer.domElement);
                         }     
                         function loadLight(){
                             var keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
@@ -176,11 +142,13 @@
                             backLight.position.set(1000, 0, -1000);
                             scene.add(backLight);
                         }
-			function onWindowResize() {//not working because of ortho?
-				//camera.aspect = window.innerWidth / window.innerHeight;
-				//camera.updateProjectionMatrix();
-				//renderer.setSize( window.innerWidth-100, window.innerHeight-100 );
-			}                         
+                        
+                        function onWindowResize() {//not working because of ortho?
+                            camera.onWindowResize();
+                            var drawingGeometries = drawCircleCollision(0);
+                            camera.update(cameraX, cameraY, cameraZ);
+                            drawingGeometries.dispose();
+                        };
                     });
 			
 		</script>
